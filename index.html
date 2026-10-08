@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Java Lernpfad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: Kursleiste links (Lektionsfolge), rechts eine Lektion mit Erklärung, Code, Quiz und Lückentext. Unter 800px gestapelt. */
+:root {
+  --bg: #f3f4f1;
+  --panel: #ffffff;
+  --ink: #1d2320;
+  --muted: #5d6762;
+  --line: #d9ddd8;
+  --accent: #b5462b;        /* Kaffeeröstung */
+  --accent-soft: #f6e4dc;
+  --code-bg: #1f2622;
+  --code-ink: #e6e9e4;
+  --k: #f0a868; --s: #a8d39a; --n: #9ecbe8; --c: #7f8c85; --t: #e9d58a;
+  --ok: #2f7d4f; --ok-soft: #dff0e4;
+  --bad: #b3312f; --bad-soft: #f8e0df;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161a18; --panel: #1e2321; --ink: #e7ebe8; --muted: #9aa49f; --line: #333b37;
+    --accent: #e98a68; --accent-soft: #3a2620;
+    --code-bg: #101412; --code-ink: #e6e9e4;
+    --ok: #6cc38f; --ok-soft: #1d3326; --bad: #ef7a74; --bad-soft: #3d2120;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161a18; --panel: #1e2321; --ink: #e7ebe8; --muted: #9aa49f; --line: #333b37;
+  --accent: #e98a68; --accent-soft: #3a2620;
+  --code-bg: #101412; --code-ink: #e6e9e4;
+  --ok: #6cc38f; --ok-soft: #1d3326; --bad: #ef7a74; --bad-soft: #3d2120;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body); padding-inline: 16px; padding-block: 24px 48px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 32px; align-items: start; }
+@media (max-width: 800px) { .wrap { grid-template-columns: minmax(0, 1fr); gap: 20px; } }
+
+header.brand { display: flex; flex-direction: column; gap: 4px; margin-bottom: 18px; }
+.brand h1 { font: 800 28px/1.1 var(--f-display); margin: 0; letter-spacing: -0.01em; }
+.brand p { margin: 0; color: var(--muted); font-size: 14px; }
+
+aside { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+@media (max-width: 800px) { aside { position: static; } }
+.progress { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.progress .row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .4s ease; }
+
+nav ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+@media (max-width: 800px) { nav ol { flex-direction: row; overflow-x: auto; padding-bottom: 6px; } }
+nav button {
+  width: 100%; display: grid; grid-template-columns: 28px minmax(0, 1fr) 16px; align-items: center; gap: 8px;
+  text-align: left; background: none; border: 0; border-radius: 6px; padding: 8px 10px; color: var(--ink);
+  font: 15px/1.3 var(--f-body); cursor: pointer;
+}
+@media (max-width: 800px) { nav button { width: auto; white-space: nowrap; grid-template-columns: auto auto auto; } }
+nav button:hover { background: var(--panel); }
+nav button[aria-current="true"] { background: var(--panel); box-shadow: inset 0 0 0 1px var(--line); font-weight: 700; }
+nav .num { font: 600 12px var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+nav .done { color: var(--ok); font-weight: 700; font-size: 14px; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+main { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: clamp(18px, 4vw, 40px); }
+.eyebrow { font: 600 12px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+main h2 { font: 800 clamp(26px, 4vw, 36px)/1.15 var(--f-display); margin: 6px 0 14px; text-wrap: balance; }
+main h3 { font: 600 20px/1.3 var(--f-display); margin: 36px 0 10px; }
+.prose { max-width: 66ch; }
+.prose p { margin: 0 0 12px; }
+.prose ul { margin: 0 0 12px; padding-left: 20px; }
+.prose li { margin-bottom: 4px; }
+code.i { font: 14px var(--f-mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+
+pre.code { margin: 14px 0; background: var(--code-bg); color: var(--code-ink); border-radius: 8px; padding: 16px 18px; overflow-x: auto; font: 14px/1.6 var(--f-mono); }
+pre.code .k { color: var(--k); } pre.code .s { color: var(--s); } pre.code .n { color: var(--n); }
+pre.code .c { color: var(--c); font-style: italic; } pre.code .t { color: var(--t); }
+.out { margin: -6px 0 14px; font: 13px/1.5 var(--f-mono); color: var(--muted); border-left: 3px solid var(--line); padding: 4px 12px; white-space: pre-wrap; }
+.out b { font-weight: 600; color: var(--ink); }
+
+.quiz { display: flex; flex-direction: column; gap: 22px; }
+.q { border-top: 1px solid var(--line); padding-top: 18px; }
+.q > p { margin: 0 0 10px; font-weight: 700; }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+.opt {
+  font: 15px/1.35 var(--f-mono); text-align: left; background: var(--bg); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; cursor: pointer; white-space: pre-wrap;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt.right { background: var(--ok-soft); border-color: var(--ok); }
+.opt.wrong { background: var(--bad-soft); border-color: var(--bad); }
+.opt:disabled { cursor: default; }
+.explain { margin: 10px 0 0; font-size: 15px; color: var(--muted); }
+.explain strong { color: var(--ok); }
+.explain strong.no { color: var(--bad); }
+
+.gap pre.code input {
+  font: inherit; color: var(--code-ink); background: transparent; border: 0; border-bottom: 2px dashed var(--k);
+  padding: 0 2px; width: 12ch;
+}
+.gap pre.code input.right { border-bottom: 2px solid var(--s); }
+.gap pre.code input.wrong { border-bottom: 2px solid var(--bad); }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.btn { font: 700 15px var(--f-body); border-radius: 6px; padding: 9px 16px; cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: #fff; }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: default; }
+.feedback { font-size: 15px; }
+.feedback.ok { color: var(--ok); font-weight: 700; }
+.feedback.bad { color: var(--bad); }
+
+.pager { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); }
+.status { margin-top: 28px; padding: 12px 14px; border-radius: 6px; background: var(--ok-soft); color: var(--ok); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .bar > span { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <aside>
+    <header class="brand">
+      <h1>Java Lernpfad</h1>
+      <p>10 Lektionen von <code class="i">main</code> bis <code class="i">ArrayList</code></p>
+    </header>
+    <div class="progress" aria-live="polite">
+      <div class="row"><span>Fortschritt</span><span id="progressText">0 / 10</span></div>
+      <div class="bar"><span id="progressBar"></span></div>
+    </div>
+    <nav aria-label="Lektionen"><ol id="nav"></ol></nav>
+  </aside>
+  <main id="lesson"></main>
+</div>
+
+<script>
+const LESSONS = [
+{
+  title: "Hallo Welt",
+  body: `<p>Jedes Java-Programm besteht aus mindestens einer <strong>Klasse</strong>. Das Programm startet immer in der Methode <code class="i">main</code>. Was dort steht, wird von oben nach unten ausgeführt.</p>
+<ul><li><code class="i">System.out.println(...)</code> gibt Text aus und springt danach in eine neue Zeile.</li>
+<li><code class="i">System.out.print(...)</code> gibt Text aus, bleibt aber in derselben Zeile.</li>
+<li>Jede Anweisung endet mit einem Semikolon <code class="i">;</code>.</li>
+<li>Der Dateiname muss zum Klassennamen passen: <code class="i">Hallo.java</code> für <code class="i">class Hallo</code>.</li></ul>
+<p>Selbst ausprobieren: Installiere ein JDK (zum Beispiel von adoptium.net), speichere den Code als <code class="i">Hallo.java</code> und starte ihn im Terminal mit <code class="i">java Hallo.java</code>.</p>`,
+  code: `public class Hallo {
+    public static void main(String[] args) {
+        // Das ist ein Kommentar
+        System.out.println("Hallo Welt!");
+        System.out.print("Java ");
+        System.out.println("macht Spaß");
+    }
+}`,
+  output: "Hallo Welt!\nJava macht Spaß",
+  quiz: [
+    { q: "In welcher Methode startet ein Java-Programm?", options: ["start()", "main()", "run()", "init()"], answer: 1,
+      explain: "Die JVM sucht nach public static void main(String[] args) und beginnt dort." },
+    { q: "Was wird ausgegeben?", code: `System.out.print("A");
+System.out.println("B");
+System.out.print("C");`, options: ["A B C", "AB\nC", "A\nB\nC", "ABC"], answer: 1,
+      explain: "print bleibt in der Zeile, println springt nach \"B\" in eine neue Zeile." }
+  ],
+  gap: { task: "Gib \"Guten Morgen\" aus und springe danach in eine neue Zeile.", before: "System.out.", after: "(\"Guten Morgen\");", answers: ["println"], hint: "Die Methode endet auf „ln“ (line)." }
+},
+{
+  title: "Variablen und Datentypen",
+  body: `<p>Eine <strong>Variable</strong> ist ein benannter Speicherplatz. In Java musst du angeben, welchen <strong>Typ</strong> der Wert hat.</p>
+<ul><li><code class="i">int</code> für ganze Zahlen: <code class="i">42</code></li>
+<li><code class="i">double</code> für Kommazahlen (mit Punkt!): <code class="i">3.14</code></li>
+<li><code class="i">boolean</code> für wahr/falsch: <code class="i">true</code>, <code class="i">false</code></li>
+<li><code class="i">char</code> für ein einzelnes Zeichen in einfachen Anführungszeichen: <code class="i">'A'</code></li>
+<li><code class="i">String</code> für Text in doppelten Anführungszeichen: <code class="i">"Hallo"</code></li></ul>
+<p>Achtung: Teilst du zwei <code class="i">int</code>-Werte, schneidet Java die Nachkommastellen ab.</p>`,
+  code: `int alter = 16;
+double preis = 2.49;
+boolean istSchueler = true;
+char note = 'A';
+String name = "Lea";
+
+System.out.println(name + " ist " + alter);
+System.out.println(7 / 2);     // Ganzzahl-Division
+System.out.println(7 / 2.0);   // Kommazahl-Division`,
+  output: "Lea ist 16\n3\n3.5",
+  quiz: [
+    { q: "Welcher Typ passt für den Wert 3.14?", options: ["int", "char", "double", "boolean"], answer: 2,
+      explain: "Kommazahlen speicherst du in double (oder float)." },
+    { q: "Was wird ausgegeben?", code: `int x = 7 / 2;
+System.out.println(x);`, options: ["3.5", "3", "4", "Fehler"], answer: 1,
+      explain: "int / int ergibt wieder einen int. Der Rest .5 wird einfach abgeschnitten, nicht gerundet." },
+    { q: "Welche Zeile ist korrekt?", options: ["char c = \"A\";", "String s = 'Hallo';", "char c = 'A';", "int i = 2.5;"], answer: 2,
+      explain: "char nutzt einfache Anführungszeichen, String doppelte. 2.5 passt nicht in einen int." }
+  ],
+  gap: { task: "Lege eine Variable für einen Namen (Text) an.", before: "", after: " name = \"Lea\";", answers: ["String"], hint: "Der Typ für Text wird großgeschrieben." }
+},
+{
+  title: "Operatoren",
+  body: `<p>Mit Operatoren rechnest und vergleichst du.</p>
+<ul><li>Rechnen: <code class="i">+ - * /</code> und <code class="i">%</code> (Rest einer Division)</li>
+<li>Kurzformen: <code class="i">a += 3</code> heißt <code class="i">a = a + 3</code>, <code class="i">a++</code> erhöht um 1</li>
+<li>Vergleiche liefern <code class="i">boolean</code>: <code class="i">== != &lt; &gt; &lt;= &gt;=</code></li>
+<li>Logik: <code class="i">&amp;&amp;</code> (und), <code class="i">||</code> (oder), <code class="i">!</code> (nicht)</li></ul>
+<p>Das <code class="i">+</code> verbindet auch Texte. Sobald links ein String steht, wird alles danach als Text angehängt.</p>`,
+  code: `int a = 17;
+System.out.println(a % 5);        // Rest
+a += 3;
+System.out.println(a);
+boolean ok = a > 10 && a < 30;
+System.out.println(ok);
+System.out.println("Summe: " + 2 + 3);
+System.out.println("Summe: " + (2 + 3));`,
+  output: "2\n20\ntrue\nSumme: 23\nSumme: 5",
+  quiz: [
+    { q: "Was ergibt 17 % 5?", options: ["3", "2", "3.4", "12"], answer: 1,
+      explain: "17 = 3 · 5 + 2. Der Rest ist 2." },
+    { q: "Was wird ausgegeben?", code: `int a = 5;
+a += 3;
+a *= 2;
+System.out.println(a);`, options: ["13", "16", "11", "10"], answer: 1,
+      explain: "5 + 3 = 8, dann 8 · 2 = 16." },
+    { q: "Was wird ausgegeben?", code: `System.out.println("1" + 2 + 3);`, options: ["6", "15", "123", "Fehler"], answer: 2,
+      explain: "Links steht ein String, also wird alles als Text angehängt: \"1\" + \"2\" + \"3\"." }
+  ],
+  gap: { task: "beide soll nur true sein, wenn a UND b positiv sind.", before: "boolean beide = a > 0 ", after: " b > 0;", answers: ["&&"], hint: "Zwei gleiche Zeichen, ein kaufmännisches Und." }
+},
+{
+  title: "Bedingungen",
+  body: `<p>Mit <code class="i">if</code> führt dein Programm Code nur aus, wenn eine Bedingung <code class="i">true</code> ist. <code class="i">else if</code> prüft weitere Fälle, <code class="i">else</code> fängt alles andere ab.</p>
+<p>Java prüft von oben nach unten und nimmt den <strong>ersten</strong> passenden Zweig.</p>
+<p>Wichtig: Strings vergleichst du mit <code class="i">.equals()</code>, nicht mit <code class="i">==</code>. <code class="i">==</code> prüft nur, ob es dasselbe Objekt im Speicher ist.</p>`,
+  code: `int punkte = 72;
+
+if (punkte >= 90) {
+    System.out.println("Sehr gut");
+} else if (punkte >= 60) {
+    System.out.println("Bestanden");
+} else {
+    System.out.println("Nicht bestanden");
+}
+
+String farbe = "rot";
+if (farbe.equals("rot")) {
+    System.out.println("Stopp!");
+}`,
+  output: "Bestanden\nStopp!",
+  quiz: [
+    { q: "Was wird ausgegeben?", code: `int n = 15;
+if (n > 20) System.out.println("groß");
+else if (n > 10) System.out.println("mittel");
+else System.out.println("klein");`, options: ["groß", "mittel", "klein", "mittel\nklein"], answer: 1,
+      explain: "15 > 20 ist falsch, 15 > 10 ist wahr. Danach wird nichts mehr geprüft." },
+    { q: "Wie prüfst du, ob der String s den Text \"ja\" enthält?", options: ["s == \"ja\"", "s.equals(\"ja\")", "s = \"ja\"", "equals(s, \"ja\")"], answer: 1,
+      explain: "equals vergleicht den Inhalt. Ein einzelnes = ist eine Zuweisung, kein Vergleich." }
+  ],
+  gap: { task: "Die Ausgabe soll ab einem Alter von 18 (einschließlich) erscheinen.", before: "if (alter ", after: " 18) {\n    System.out.println(\"Volljährig\");\n}", answers: [">="], hint: "Größer oder gleich." }
+},
+{
+  title: "Schleifen",
+  body: `<p>Schleifen wiederholen Code.</p>
+<ul><li><code class="i">for</code>: wenn du weißt, wie oft. Aufbau: Start; Bedingung; Schritt.</li>
+<li><code class="i">while</code>: solange eine Bedingung gilt. Wird eventuell nie ausgeführt.</li>
+<li><code class="i">do … while</code>: läuft immer mindestens einmal, geprüft wird am Ende.</li>
+<li><code class="i">break</code> beendet die Schleife sofort, <code class="i">continue</code> springt zum nächsten Durchlauf.</li></ul>`,
+  code: `for (int i = 1; i <= 3; i++) {
+    System.out.println("Runde " + i);
+}
+
+int summe = 0;
+int k = 1;
+while (k <= 4) {
+    summe += k;
+    k++;
+}
+System.out.println("Summe: " + summe);`,
+  output: "Runde 1\nRunde 2\nRunde 3\nSumme: 10",
+  quiz: [
+    { q: "Was wird ausgegeben?", code: `for (int i = 0; i < 3; i++) {
+    System.out.print(i);
+}`, options: ["123", "012", "0123", "0 1 2"], answer: 1,
+      explain: "i startet bei 0 und läuft, solange i < 3 ist: 0, 1, 2." },
+    { q: "Wie oft läuft eine do-while-Schleife mindestens?", options: ["0-mal", "1-mal", "2-mal", "Unendlich"], answer: 1,
+      explain: "Die Bedingung wird erst am Ende geprüft, also läuft der Block mindestens einmal." },
+    { q: "Was wird ausgegeben?", code: `for (int i = 1; i <= 5; i++) {
+    if (i == 3) break;
+    System.out.print(i);
+}`, options: ["12345", "1245", "12", "123"], answer: 2,
+      explain: "Bei i == 3 bricht break die Schleife ab, bevor 3 ausgegeben wird." }
+  ],
+  gap: { task: "Die Schleife soll 5-mal laufen. Ergänze den Schritt.", before: "for (int i = 0; i < 5; ", after: ") {\n    System.out.println(i);\n}", answers: ["i++", "++i", "i+=1", "i=i+1"], hint: "i um eins erhöhen." }
+},
+{
+  title: "Arrays",
+  body: `<p>Ein <strong>Array</strong> speichert mehrere Werte desselben Typs. Die Größe steht beim Anlegen fest.</p>
+<ul><li>Der erste Index ist <strong>0</strong>, der letzte ist <code class="i">länge - 1</code>.</li>
+<li><code class="i">zahlen.length</code> liefert die Anzahl (ohne Klammern!).</li>
+<li>Greifst du auf einen Index außerhalb zu, stürzt das Programm mit <code class="i">ArrayIndexOutOfBoundsException</code> ab.</li>
+<li>Die <strong>for-each</strong>-Schleife geht alle Elemente der Reihe nach durch.</li></ul>`,
+  code: `int[] zahlen = {4, 8, 15, 16, 23};
+System.out.println(zahlen[0]);
+System.out.println(zahlen.length);
+
+zahlen[1] = 99;
+
+for (int z : zahlen) {
+    System.out.print(z + " ");
+}
+
+String[] tage = new String[7];   // 7 leere Plätze (null)`,
+  output: "4\n5\n4 99 15 16 23 ",
+  quiz: [
+    { q: "Was ist z[1]?", code: `int[] z = {4, 8, 15};`, options: ["4", "8", "15", "Fehler"], answer: 1,
+      explain: "Index 0 ist 4, Index 1 ist 8." },
+    { q: "Was passiert bei z[3] mit dem Array von oben?", options: ["Gibt 0 zurück", "Gibt 15 zurück", "Gibt null zurück", "ArrayIndexOutOfBoundsException"], answer: 3,
+      explain: "Das Array hat 3 Elemente, also gibt es nur die Indizes 0, 1 und 2." }
+  ],
+  gap: { task: "Gib die Anzahl der Elemente im Array aus.", before: "System.out.println(zahlen.", after: ");", answers: ["length"], hint: "Bei Arrays ohne runde Klammern." }
+},
+{
+  title: "Methoden",
+  body: `<p>Mit <strong>Methoden</strong> verpackst du Code unter einem Namen und kannst ihn mehrfach aufrufen.</p>
+<ul><li>Vor dem Namen steht der <strong>Rückgabetyp</strong>. <code class="i">void</code> bedeutet: gibt nichts zurück.</li>
+<li>In den Klammern stehen die <strong>Parameter</strong> mit Typ.</li>
+<li><code class="i">return</code> liefert einen Wert zurück und beendet die Methode.</li>
+<li>Solange du ohne Objekte arbeitest, schreibst du <code class="i">static</code> davor.</li></ul>`,
+  code: `public class Rechner {
+    static int addiere(int a, int b) {
+        return a + b;
+    }
+
+    static void gruesse(String name) {
+        System.out.println("Hallo " + name);
+    }
+
+    public static void main(String[] args) {
+        int ergebnis = addiere(3, 4);
+        System.out.println(ergebnis);
+        gruesse("Tom");
+    }
+}`,
+  output: "7\nHallo Tom",
+  quiz: [
+    { q: "Was wird ausgegeben?", code: `static int doppelt(int x) {
+    return x * 2;
+}
+// in main:
+System.out.println(doppelt(doppelt(3)));`, options: ["6", "9", "12", "36"], answer: 2,
+      explain: "Innen: doppelt(3) = 6. Außen: doppelt(6) = 12." },
+    { q: "Was bedeutet der Rückgabetyp void?", options: ["Die Methode gibt 0 zurück", "Die Methode gibt nichts zurück", "Die Methode ist leer", "Die Methode ist privat"], answer: 1,
+      explain: "void-Methoden tun etwas (z. B. ausgeben), liefern aber keinen Wert." }
+  ],
+  gap: { task: "Die Methode soll eine ganze Zahl zurückgeben.", before: "static ", after: " quadrat(int x) {\n    return x * x;\n}", answers: ["int"], hint: "Derselbe Typ wie der Parameter." }
+},
+{
+  title: "Klassen und Objekte",
+  body: `<p>Eine <strong>Klasse</strong> ist ein Bauplan, ein <strong>Objekt</strong> ist ein konkretes Ding nach diesem Plan. Ein Bauplan „Hund“ kann viele Hunde-Objekte erzeugen.</p>
+<ul><li><strong>Attribute</strong> (Felder) speichern Daten des Objekts.</li>
+<li>Der <strong>Konstruktor</strong> heißt genau wie die Klasse und hat keinen Rückgabetyp. Er läuft beim Erzeugen.</li>
+<li><code class="i">new</code> erzeugt ein neues Objekt.</li>
+<li><code class="i">this</code> meint das aktuelle Objekt, z. B. <code class="i">this.name</code>.</li></ul>`,
+  code: `class Hund {
+    String name;
+    int alter;
+
+    Hund(String name, int alter) {
+        this.name = name;
+        this.alter = alter;
+    }
+
+    void bellen() {
+        System.out.println(name + " sagt: Wuff!");
+    }
+}
+
+// in main:
+Hund h1 = new Hund("Bello", 3);
+Hund h2 = new Hund("Luna", 5);
+h1.bellen();
+System.out.println(h2.alter);`,
+  output: "Bello sagt: Wuff!\n5",
+  quiz: [
+    { q: "Wie muss der Konstruktor der Klasse Auto heißen?", options: ["constructor", "init", "Auto", "new"], answer: 2,
+      explain: "Der Konstruktor trägt denselben Namen wie die Klasse." },
+    { q: "Was beschreibt eine Klasse am besten?", options: ["Ein einzelnes Objekt", "Einen Bauplan für Objekte", "Eine Variable", "Eine Schleife"], answer: 1,
+      explain: "Aus einer Klasse kannst du beliebig viele Objekte erzeugen." }
+  ],
+  gap: { task: "Erzeuge ein neues Hund-Objekt.", before: "Hund h = ", after: " Hund(\"Rex\", 2);", answers: ["new"], hint: "Drei Buchstaben, heißt auf Deutsch „neu“." }
+},
+{
+  title: "Strings",
+  body: `<p><code class="i">String</code> ist eine Klasse mit vielen nützlichen Methoden. Strings sind <strong>unveränderlich</strong>: Methoden wie <code class="i">toUpperCase()</code> liefern einen neuen String, das Original bleibt gleich.</p>
+<ul><li><code class="i">length()</code>: Anzahl der Zeichen (bei Strings mit Klammern!)</li>
+<li><code class="i">charAt(i)</code>: Zeichen an Position i, ab 0 gezählt</li>
+<li><code class="i">substring(von, bis)</code>: Teilstück, „bis“ ist exklusive</li>
+<li><code class="i">toUpperCase()</code>, <code class="i">toLowerCase()</code>, <code class="i">contains(...)</code>, <code class="i">replace(a, b)</code></li></ul>`,
+  code: `String wort = "Programmieren";
+System.out.println(wort.length());
+System.out.println(wort.charAt(0));
+System.out.println(wort.substring(0, 7));
+System.out.println(wort.toUpperCase());
+System.out.println(wort.contains("gramm"));
+System.out.println(wort);   // unverändert!`,
+  output: "13\nP\nProgram\nPROGRAMMIEREN\ntrue\nProgrammieren",
+  quiz: [
+    { q: "Was liefert \"Java\".charAt(0)?", options: ["'a'", "'J'", "\"Java\"", "0"], answer: 1,
+      explain: "Position 0 ist das erste Zeichen." },
+    { q: "Was liefert \"Programm\".substring(0, 3)?", options: ["\"Prog\"", "\"Pr\"", "\"Pro\"", "\"rog\""], answer: 2,
+      explain: "Zeichen 0, 1 und 2. Der Endindex 3 gehört nicht mehr dazu." },
+    { q: "Was wird ausgegeben?", code: `String s = "hallo";
+s.toUpperCase();
+System.out.println(s);`, options: ["HALLO", "hallo", "Hallo", "Fehler"], answer: 1,
+      explain: "Das Ergebnis von toUpperCase() wurde nicht gespeichert. Richtig wäre: s = s.toUpperCase();" }
+  ],
+  gap: { task: "Wandle den Text in Großbuchstaben um.", before: "String laut = wort.", after: "();", answers: ["toUpperCase"], hint: "to…Case" }
+},
+{
+  title: "ArrayList",
+  body: `<p>Eine <code class="i">ArrayList</code> ist eine Liste, die wachsen und schrumpfen kann. Anders als ein Array musst du die Größe nicht vorher kennen.</p>
+<ul><li>Importieren: <code class="i">import java.util.ArrayList;</code></li>
+<li>In spitzen Klammern steht der Typ. Für Zahlen nimmst du <code class="i">Integer</code> statt <code class="i">int</code>, weil Listen nur Objekte speichern.</li>
+<li><code class="i">add</code>, <code class="i">get</code>, <code class="i">set</code>, <code class="i">remove</code>, <code class="i">size()</code>, <code class="i">contains</code></li></ul>`,
+  code: `import java.util.ArrayList;
+
+ArrayList<String> einkauf = new ArrayList<>();
+einkauf.add("Milch");
+einkauf.add("Brot");
+einkauf.add(0, "Äpfel");      // an Position 0 einfügen
+
+System.out.println(einkauf);
+System.out.println(einkauf.get(1));
+einkauf.remove("Brot");
+System.out.println(einkauf.size());`,
+  output: "[Äpfel, Milch, Brot]\nMilch\n2",
+  quiz: [
+    { q: "Was wird ausgegeben?", code: `ArrayList<String> l = new ArrayList<>();
+l.add("a");
+l.add("b");
+l.add(0, "c");
+System.out.println(l.get(1));`, options: ["\"a\"", "\"b\"", "\"c\"", "Fehler"], answer: 0,
+      explain: "Nach dem Einfügen ist die Liste [c, a, b]. Index 1 ist \"a\"." },
+    { q: "Wie viele Elemente hat eine ArrayList? Welcher Aufruf ist richtig?", options: ["liste.length", "liste.length()", "liste.size()", "liste.count"], answer: 2,
+      explain: "Array: length. String: length(). ArrayList: size(). Das verwechselt fast jeder am Anfang." }
+  ],
+  gap: { task: "Füge \"Käse\" am Ende der Liste hinzu.", before: "einkauf.", after: "(\"Käse\");", answers: ["add"], hint: "Englisch für „hinzufügen“." }
+}
+];
+
+/* ---- Syntax-Highlighting ---- */
+const KW = new Set("public private protected static void class new return if else for while do break continue import int double boolean char long float true false null this extends implements interface try catch finally throw throws switch case default final".split(" "));
+function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function highlight(src) {
+  const re = /(\/\/[^\n]*)|("(?:\\.|[^"\\])*")|('(?:\\.|[^'\\])')|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)/g;
+  let out = "", last = 0, m;
+  while ((m = re.exec(src))) {
+    out += esc(src.slice(last, m.index));
+    const t = esc(m[0]);
+    if (m[1]) out += `<span class="c">${t}</span>`;
+    else if (m[2] || m[3]) out += `<span class="s">${t}</span>`;
+    else if (m[4]) out += `<span class="n">${t}</span>`;
+    else if (KW.has(m[5])) out += `<span class="k">${t}</span>`;
+    else if (/^[A-Z]/.test(m[5])) out += `<span class="t">${t}</span>`;
+    else out += t;
+    last = re.lastIndex;
+  }
+  return out + esc(src.slice(last));
+}
+
+/* ---- Fortschritt ---- */
+const KEY = "java-lernpfad-v1";
+let state = { current: 0, done: {} };
+try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && typeof s === "object") state = Object.assign(state, s); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+function lessonState(i) { return state.done[i] || (state.done[i] = { quiz: {}, gap: false }); }
+function isDone(i) {
+  const s = state.done[i]; if (!s) return false;
+  return s.gap && LESSONS[i].quiz.every((_, qi) => s.quiz[qi] === true);
+}
+
+function renderNav() {
+  const nav = document.getElementById("nav");
+  nav.innerHTML = LESSONS.map((l, i) => `<li><button type="button" data-i="${i}" aria-current="${i === state.current}">
+    <span class="num">${String(i + 1).padStart(2, "0")}</span><span>${l.title}</span><span class="done">${isDone(i) ? "✓" : ""}</span></button></li>`).join("");
+  nav.querySelectorAll("button").forEach(b => b.addEventListener("click", () => go(+b.dataset.i)));
+  const n = LESSONS.filter((_, i) => isDone(i)).length;
+  document.getElementById("progressText").textContent = `${n} / ${LESSONS.length}`;
+  document.getElementById("progressBar").style.width = (n / LESSONS.length * 100) + "%";
+}
+
+function renderLesson() {
+  const i = state.current, L = LESSONS[i], st = lessonState(i);
+  const main = document.getElementById("lesson");
+  const quizHtml = L.quiz.map((q, qi) => `
+    <div class="q" data-qi="${qi}">
+      <p>${qi + 1}. ${esc(q.q)}</p>
+      ${q.code ? `<pre class="code">${highlight(q.code)}</pre>` : ""}
+      <div class="opts">${q.options.map((o, oi) => `<button type="button" class="opt" data-oi="${oi}">${esc(o)}</button>`).join("")}</div>
+      <p class="explain" hidden></p>
+    </div>`).join("");
+  const g = L.gap;
+  main.innerHTML = `
+    <div class="eyebrow">Lektion ${i + 1} von ${LESSONS.length}</div>
+    <h2>${L.title}</h2>
+    <div class="prose">${L.body}</div>
+    <pre class="code">${highlight(L.code)}</pre>
+    <div class="out"><b>Ausgabe:</b>\n${esc(L.output)}</div>
+
+    <h3>Quiz</h3>
+    <div class="quiz">${quizHtml}</div>
+
+    <h3>Lückentext</h3>
+    <div class="gap">
+      <p class="prose">${esc(g.task)}</p>
+      <pre class="code">${highlight(g.before)}<input id="gap-${i}" aria-label="Lücke" autocomplete="off" spellcheck="false" autocapitalize="off">${highlight(g.after)}</pre>
+      <div class="actions">
+        <button type="button" class="btn" id="checkGap">Prüfen</button>
+        <button type="button" class="btn ghost" id="hintGap">Tipp</button>
+        <span class="feedback" id="gapFb" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="status" id="status" hidden>Lektion abgeschlossen.</div>
+
+    <nav class="pager" aria-label="Blättern">
+      <button type="button" class="btn ghost" id="prev" ${i === 0 ? "disabled" : ""}>← Zurück</button>
+      <button type="button" class="btn" id="next" ${i === LESSONS.length - 1 ? "disabled" : ""}>Weiter →</button>
+    </nav>`;
+
+  // Quiz
+  main.querySelectorAll(".q").forEach(qEl => {
+    const qi = +qEl.dataset.qi, q = L.quiz[qi];
+    const btns = qEl.querySelectorAll(".opt"), ex = qEl.querySelector(".explain");
+    function show(chosen) {
+      btns.forEach((b, oi) => {
+        b.classList.toggle("right", oi === q.answer && (chosen === q.answer || st.quiz[qi] === true));
+        b.classList.toggle("wrong", oi === chosen && chosen !== q.answer);
+        b.disabled = st.quiz[qi] === true;
+      });
+      ex.hidden = false;
+      ex.innerHTML = chosen === q.answer
+        ? `<strong>Richtig.</strong> ${esc(q.explain)}`
+        : `<strong class="no">Noch nicht.</strong> Versuch es noch einmal.`;
+    }
+    btns.forEach((b, oi) => b.addEventListener("click", () => {
+      if (oi === q.answer) st.quiz[qi] = true;
+      save(); show(oi); update();
+    }));
+    if (st.quiz[qi] === true) show(q.answer);
+  });
+
+  // Lückentext
+  const input = document.getElementById(`gap-${i}`), fb = document.getElementById("gapFb");
+  input.style.width = Math.max(6, Math.max(...g.answers.map(a => a.length)) + 3) + "ch";
+  const norm = s => s.replace(/\s+/g, "");
+  function checkGap() {
+    const ok = g.answers.some(a => norm(a) === norm(input.value));
+    input.classList.toggle("right", ok); input.classList.toggle("wrong", !ok);
+    fb.className = "feedback " + (ok ? "ok" : "bad");
+    fb.textContent = ok ? "Richtig!" : (input.value.trim() ? "Das passt noch nicht." : "Trage erst etwas in die Lücke ein.");
+    if (ok) { st.gap = true; save(); update(); }
+  }
+  document.getElementById("checkGap").addEventListener("click", checkGap);
+  input.addEventListener("keydown", e => { if (e.key === "Enter") checkGap(); });
+  document.getElementById("hintGap").addEventListener("click", () => { fb.className = "feedback"; fb.textContent = "Tipp: " + g.hint; });
+  if (st.gap) { input.value = g.answers[0]; input.classList.add("right"); fb.className = "feedback ok"; fb.textContent = "Richtig!"; }
+
+  document.getElementById("prev").addEventListener("click", () => go(i - 1));
+  document.getElementById("next").addEventListener("click", () => go(i + 1));
+
+  function update() {
+    document.getElementById("status").hidden = !isDone(i);
+    renderNav();
+  }
+  update();
+}
+
+function go(i) {
+  if (i < 0 || i >= LESSONS.length) return;
+  state.current = i; save();
+  renderLesson();
+  window.scrollTo({ top: 0, behavior: "auto" });
+}
+
+if (!(state.current >= 0 && state.current < LESSONS.length)) state.current = 0;
+renderLesson();
+</script>
+</body>
+</html>
